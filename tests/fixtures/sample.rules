@@ -1,0 +1,6 @@
+# sample ruleset for testing
+alert tcp any any -> 10.0.0.10 22 (msg:"ssh connection attempt"; sid:1000001;)
+alert udp any any -> any 53 (msg:"dns query"; sid:1000002;)
+
+# blank lines and comments should be skipped
+alert tcp any any -> any 23 (msg:"telnet cleartext"; sid:1000003;)
