@@ -3,6 +3,12 @@
     alert tcp any any -> 10.0.0.10 22 (msg:"ssh connection attempt"; sid:1000001;)
     alert udp any any -> any 53 (msg:"dns query"; sid:1000002;)
 
+A rule can also carry count/seconds options to make it stateful - instead of
+alerting on every matching packet, it tracks matches per source ip and only
+fires once that source crosses count matches within a rolling window:
+
+    alert tcp any any -> any 22 (msg:"ssh brute force"; sid:1000004; count:5; seconds:60;)
+
 Only the "->" direction is supported for now (no bidirectional "<>" yet).
 """
 
@@ -30,6 +36,12 @@ class Rule:
     msg: str
     sid: int
     options: dict = field(default_factory=dict)
+    count: int = None
+    seconds: int = None
+
+    @property
+    def is_stateful(self):
+        return self.count is not None
 
 
 def _parse_options(raw):
@@ -60,6 +72,11 @@ def parse_rule(line):
     if "sid" not in options:
         raise RuleParseError(f"rule missing sid option: {line}")
 
+    has_count = "count" in options
+    has_seconds = "seconds" in options
+    if has_count != has_seconds:
+        raise RuleParseError(f"count and seconds must be used together: {line}")
+
     return Rule(
         action=fields["action"],
         proto=fields["proto"].lower(),
@@ -70,6 +87,8 @@ def parse_rule(line):
         msg=options["msg"],
         sid=int(options["sid"]),
         options=options,
+        count=int(options["count"]) if has_count else None,
+        seconds=int(options["seconds"]) if has_seconds else None,
     )
 
 
