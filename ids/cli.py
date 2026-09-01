@@ -3,13 +3,13 @@
 import argparse
 import sys
 
-from ids import match, packets, rules
+from ids import engine, packets, rules
 
 
 def cmd_run(args):
     ruleset = rules.parse_rules_file(args.rules)
     pkts = packets.read_packets(args.pcap)
-    alerts = match.evaluate(ruleset, pkts)
+    alerts = engine.evaluate(ruleset, pkts)
 
     print(f"loaded {len(ruleset)} rules, read {len(pkts)} packets")
 
@@ -19,9 +19,14 @@ def cmd_run(args):
 
     print(f"\n{len(alerts)} alerts:")
     for a in alerts:
-        rule, pkt = a["rule"], a["packet"]
-        print(f"  [sid:{rule.sid}] {rule.msg} - {pkt['src_ip']}:{pkt.get('src_port')} "
-              f"-> {pkt['dst_ip']}:{pkt.get('dst_port')} ({pkt['proto']})")
+        rule = a["rule"]
+        if "packet" in a:
+            pkt = a["packet"]
+            print(f"  [sid:{rule.sid}] {rule.msg} - {pkt['src_ip']}:{pkt.get('src_port')} "
+                  f"-> {pkt['dst_ip']}:{pkt.get('dst_port')} ({pkt['proto']})")
+        else:
+            print(f"  [sid:{rule.sid}] {rule.msg} - {a['src_ip']} made {a['count']} matches "
+                  f"within {a['window_seconds']}s")
 
 
 def cmd_check_rules(args):

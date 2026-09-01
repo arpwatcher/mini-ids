@@ -40,10 +40,10 @@ def test_parse_rule_malformed_raises():
 
 def test_parse_rules_file_count():
     parsed = rules.parse_rules_file(FIXTURE)
-    assert len(parsed) == 3
+    assert len(parsed) == 4
 
 
 def test_parse_rules_file_skips_comments_and_blanks():
     parsed = rules.parse_rules_file(FIXTURE)
     sids = [r.sid for r in parsed]
-    assert sids == [1000001, 1000002, 1000003]
+    assert sids == [1000001, 1000002, 1000003, 1000004]

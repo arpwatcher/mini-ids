@@ -24,6 +24,10 @@ add(IP(src="10.0.0.5", dst="10.0.0.20") / TCP(sport=53000, dport=23, flags="S"))
 add(IP(src="10.0.0.5", dst="10.0.0.20") / TCP(sport=53000, dport=443, flags="S"))
 add(IP(src="10.0.0.5", dst="10.0.0.1") / ICMP())
 
+# ssh brute force: one attacker hammering port 22 six times in quick succession
+for i in range(6):
+    add(IP(src="10.0.0.88", dst="10.0.0.10") / TCP(sport=44000 + i, dport=22, flags="S"), dt=3.0)
+
 out_path = Path(__file__).parent / "sample.pcap"
 wrpcap(str(out_path), packets)
 print(f"wrote {len(packets)} packets to {out_path}")

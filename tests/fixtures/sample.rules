@@ -4,3 +4,6 @@ alert udp any any -> any 53 (msg:"dns query"; sid:1000002;)
 
 # blank lines and comments should be skipped
 alert tcp any any -> any 23 (msg:"telnet cleartext"; sid:1000003;)
+
+# stateful rule: fires once per source that crosses the threshold, not per packet
+alert tcp any any -> any 22 (msg:"ssh brute force"; sid:1000004; count:5; seconds:60;)
