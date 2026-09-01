@@ -9,14 +9,19 @@ matching engine).
 - `rules.py` - parses the rule language into `Rule` objects. Syntax:
   `alert tcp any any -> 10.0.0.10 22 (msg:"ssh connection attempt"; sid:1000001;)`.
   Only the `->` direction is supported for now, msg and sid are required options.
-- `match.py` - the matching engine: protocol, ip (exact or CIDR), and port (exact or
-  range, e.g. `8000:9000`) matching, plus `evaluate()` which runs a full ruleset against
-  a list of packets and returns every match as an alert.
+- `match.py` - single-packet matching: protocol, ip (exact or CIDR), and port (exact or
+  range, e.g. `8000:9000`).
+- `engine.py` - ties matching together with time-windowed state. A rule with `count` and
+  `seconds` options becomes stateful - instead of alerting on every match, it tracks
+  matches per source ip and fires one alert per burst once a source crosses the threshold
+  within the window, e.g. `count:5; seconds:60;` for "5 connection attempts inside a
+  minute". Once a burst qualifies, tracking jumps past it rather than re-alerting on every
+  packet past the threshold - that would be noise, not signal.
 - `packets.py` - a small standalone pcap reader built on scapy. Deliberately not shared
   with pcap-toolkit so this repo builds and runs entirely on its own.
 
-Still to come: stateful rules (rate/threshold based, e.g. "5 connections in 10 seconds"),
-payload content matching, live capture instead of just pcap files.
+Still to come: payload content matching (a `content:"..."` option), an alert log file,
+live capture instead of just pcap files.
 
 ## Usage
 
@@ -34,6 +39,8 @@ Write your own rules in a `.rules` file, one per line, `#` for comments.
 pytest
 ```
 
-22 tests. `tests/fixtures/sample.pcap` is a small synthetic capture built with
-`tests/fixtures/make_sample_pcap.py`, `tests/fixtures/sample.rules` is a matching ruleset,
-so the whole pipeline (parse rules, read pcap, match, alert) gets exercised end to end.
+33 tests. `tests/fixtures/sample.pcap` is a small synthetic capture built with
+`tests/fixtures/make_sample_pcap.py`, `tests/fixtures/sample.rules` is a matching ruleset
+including a stateful brute-force rule, so the whole pipeline (parse rules, read pcap,
+match, threshold tracking, alert) gets exercised end to end. The fixture includes a
+deliberate six-attempt ssh burst from one source to trigger the threshold rule.
