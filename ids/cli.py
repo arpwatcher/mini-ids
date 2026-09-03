@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from ids import engine, packets, rules
+from ids import alertlog, engine, packets, rules
 
 
 def cmd_run(args):
@@ -28,6 +28,10 @@ def cmd_run(args):
             print(f"  [sid:{rule.sid}] {rule.msg} - {a['src_ip']} made {a['count']} matches "
                   f"within {a['window_seconds']}s")
 
+    if args.log:
+        alertlog.write_alerts(alerts, args.log, append=True)
+        print(f"\nappended {len(alerts)} alerts to {args.log}")
+
 
 def cmd_check_rules(args):
     ruleset = rules.parse_rules_file(args.rules)
@@ -44,6 +48,7 @@ def build_parser():
     run_parser = sub.add_parser("run", help="run a ruleset against a pcap file")
     run_parser.add_argument("rules")
     run_parser.add_argument("pcap")
+    run_parser.add_argument("--log", help="append alerts to this log file")
     run_parser.set_defaults(func=cmd_run)
 
     check_parser = sub.add_parser("check-rules", help="parse and list a ruleset without running it")
