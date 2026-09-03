@@ -7,3 +7,6 @@ alert tcp any any -> any 23 (msg:"telnet cleartext"; sid:1000003;)
 
 # stateful rule: fires once per source that crosses the threshold, not per packet
 alert tcp any any -> any 22 (msg:"ssh brute force"; sid:1000004; count:5; seconds:60;)
+
+# content matching: catches cleartext ftp passwords going over the wire
+alert tcp any any -> any 21 (msg:"ftp cleartext password"; sid:1000005; content:"PASS ";)
