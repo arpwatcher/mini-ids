@@ -9,6 +9,11 @@ fires once that source crosses count matches within a rolling window:
 
     alert tcp any any -> any 22 (msg:"ssh brute force"; sid:1000004; count:5; seconds:60;)
 
+A rule can also carry a content option to match against the packet payload,
+a plain substring search (case sensitive) over the raw bytes:
+
+    alert tcp any any -> any 21 (msg:"ftp cleartext password"; sid:1000005; content:"PASS ";)
+
 Only the "->" direction is supported for now (no bidirectional "<>" yet).
 """
 
@@ -38,6 +43,7 @@ class Rule:
     options: dict = field(default_factory=dict)
     count: int = None
     seconds: int = None
+    content: str = None
 
     @property
     def is_stateful(self):
@@ -89,6 +95,7 @@ def parse_rule(line):
         options=options,
         count=int(options["count"]) if has_count else None,
         seconds=int(options["seconds"]) if has_seconds else None,
+        content=options.get("content"),
     )
 
 
