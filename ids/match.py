@@ -40,6 +40,15 @@ def proto_matches(value, pattern):
     return pattern == "any" or value == pattern
 
 
+def content_matches(payload, pattern):
+    """pattern is None when the rule doesn't care about payload content -
+    that always matches. Otherwise it's a plain substring search, case
+    sensitive, same as snort's basic content matching."""
+    if pattern is None:
+        return True
+    return pattern.encode() in payload
+
+
 def rule_matches(rule, packet):
     return (
         proto_matches(packet["proto"], rule.proto)
@@ -47,6 +56,7 @@ def rule_matches(rule, packet):
         and ip_matches(packet["dst_ip"], rule.dst_ip)
         and port_matches(packet.get("src_port"), rule.src_port)
         and port_matches(packet.get("dst_port"), rule.dst_port)
+        and content_matches(packet.get("payload", b""), rule.content)
     )
 
 
