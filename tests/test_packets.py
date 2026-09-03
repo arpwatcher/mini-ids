@@ -7,7 +7,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "sample.pcap"
 
 def test_read_packets_count():
     result = packets.read_packets(FIXTURE)
-    assert len(result) == 11
+    assert len(result) == 13
 
 
 def test_tcp_packet_fields():
@@ -22,3 +22,15 @@ def test_icmp_packet_has_no_ports():
     icmp_pkt = next(p for p in result if p["proto"] == "icmp")
     assert icmp_pkt["src_port"] is None
     assert icmp_pkt["dst_port"] is None
+
+
+def test_payload_captured_for_packets_with_data():
+    result = packets.read_packets(FIXTURE)
+    ftp_pkt = next(p for p in result if p["dst_port"] == 21 and b"PASS" in p["payload"])
+    assert ftp_pkt["payload"] == b"PASS hunter2\r\n"
+
+
+def test_payload_empty_for_packets_without_data():
+    result = packets.read_packets(FIXTURE)
+    ssh_pkt = next(p for p in result if p["dst_port"] == 22)
+    assert ssh_pkt["payload"] == b""

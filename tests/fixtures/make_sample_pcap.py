@@ -28,6 +28,10 @@ add(IP(src="10.0.0.5", dst="10.0.0.1") / ICMP())
 for i in range(6):
     add(IP(src="10.0.0.88", dst="10.0.0.10") / TCP(sport=44000 + i, dport=22, flags="S"), dt=3.0)
 
+# ftp cleartext password, the classic content matching example
+add(IP(src="10.0.0.5", dst="10.0.0.20") / TCP(sport=54000, dport=21, flags="PA") / b"USER admin\r\n")
+add(IP(src="10.0.0.5", dst="10.0.0.20") / TCP(sport=54000, dport=21, flags="PA") / b"PASS hunter2\r\n")
+
 out_path = Path(__file__).parent / "sample.pcap"
 wrpcap(str(out_path), packets)
 print(f"wrote {len(packets)} packets to {out_path}")

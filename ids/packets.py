@@ -2,7 +2,7 @@
 separate and standalone rather than depending on pcap-toolkit, so this repo
 builds and runs on its own."""
 
-from scapy.all import ICMP, TCP, UDP, IP, rdpcap
+from scapy.all import ICMP, TCP, UDP, IP, Raw, rdpcap
 
 
 def read_packets(path):
@@ -16,6 +16,7 @@ def read_packets(path):
             "time": float(pkt.time),
             "src_ip": ip_layer.src,
             "dst_ip": ip_layer.dst,
+            "payload": bytes(pkt[Raw].load) if Raw in pkt else b"",
         }
 
         if TCP in pkt:
