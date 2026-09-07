@@ -49,15 +49,33 @@ def content_matches(payload, pattern):
     return pattern.encode() in payload
 
 
-def rule_matches(rule, packet):
+def _endpoints_match(rule, packet, reverse=False):
+    if reverse:
+        src_ip_pattern, dst_ip_pattern = rule.dst_ip, rule.src_ip
+        src_port_pattern, dst_port_pattern = rule.dst_port, rule.src_port
+    else:
+        src_ip_pattern, dst_ip_pattern = rule.src_ip, rule.dst_ip
+        src_port_pattern, dst_port_pattern = rule.src_port, rule.dst_port
+
     return (
-        proto_matches(packet["proto"], rule.proto)
-        and ip_matches(packet["src_ip"], rule.src_ip)
-        and ip_matches(packet["dst_ip"], rule.dst_ip)
-        and port_matches(packet.get("src_port"), rule.src_port)
-        and port_matches(packet.get("dst_port"), rule.dst_port)
-        and content_matches(packet.get("payload", b""), rule.content)
+        ip_matches(packet["src_ip"], src_ip_pattern)
+        and ip_matches(packet["dst_ip"], dst_ip_pattern)
+        and port_matches(packet.get("src_port"), src_port_pattern)
+        and port_matches(packet.get("dst_port"), dst_port_pattern)
     )
+
+
+def rule_matches(rule, packet):
+    if not proto_matches(packet["proto"], rule.proto):
+        return False
+    if not content_matches(packet.get("payload", b""), rule.content):
+        return False
+
+    if _endpoints_match(rule, packet):
+        return True
+    if rule.bidirectional and _endpoints_match(rule, packet, reverse=True):
+        return True
+    return False
 
 
 def evaluate(rules, packets):
