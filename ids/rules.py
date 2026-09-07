@@ -14,7 +14,10 @@ a plain substring search (case sensitive) over the raw bytes:
 
     alert tcp any any -> any 21 (msg:"ftp cleartext password"; sid:1000005; content:"PASS ";)
 
-Only the "->" direction is supported for now (no bidirectional "<>" yet).
+The direction operator can be "->" (one way, src to dst) or "<>" (either
+direction - matches traffic from src to dst or from dst to src):
+
+    alert tcp any any <> any 445 (msg:"smb traffic either direction"; sid:1000006;)
 """
 
 import re
@@ -22,7 +25,7 @@ from dataclasses import dataclass, field
 
 HEADER_RE = re.compile(
     r"^(?P<action>\w+)\s+(?P<proto>\w+)\s+(?P<src_ip>\S+)\s+(?P<src_port>\S+)\s+"
-    r"->\s+(?P<dst_ip>\S+)\s+(?P<dst_port>\S+)\s+\((?P<options>.*)\)\s*$"
+    r"(?P<direction>->|<>)\s+(?P<dst_ip>\S+)\s+(?P<dst_port>\S+)\s+\((?P<options>.*)\)\s*$"
 )
 
 
@@ -44,6 +47,7 @@ class Rule:
     count: int = None
     seconds: int = None
     content: str = None
+    bidirectional: bool = False
 
     @property
     def is_stateful(self):
@@ -96,6 +100,7 @@ def parse_rule(line):
         count=int(options["count"]) if has_count else None,
         seconds=int(options["seconds"]) if has_seconds else None,
         content=options.get("content"),
+        bidirectional=fields["direction"] == "<>",
     )
 
 
