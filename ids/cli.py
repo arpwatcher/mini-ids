@@ -1,6 +1,7 @@
 """Entry point: run a ruleset against a pcap file, print alerts."""
 
 import argparse
+import json
 import sys
 
 from ids import alertlog, engine, packets, rules
@@ -11,26 +12,29 @@ def cmd_run(args):
     pkts = packets.read_packets(args.pcap)
     alerts = engine.evaluate(ruleset, pkts)
 
-    print(f"loaded {len(ruleset)} rules, read {len(pkts)} packets")
+    if args.format == "json":
+        print(json.dumps([alertlog.alert_to_dict(a) for a in alerts], indent=2))
+    else:
+        print(f"loaded {len(ruleset)} rules, read {len(pkts)} packets")
 
-    if not alerts:
-        print("no alerts")
-        return
-
-    print(f"\n{len(alerts)} alerts:")
-    for a in alerts:
-        rule = a["rule"]
-        if "packet" in a:
-            pkt = a["packet"]
-            print(f"  [sid:{rule.sid}] {rule.msg} - {pkt['src_ip']}:{pkt.get('src_port')} "
-                  f"-> {pkt['dst_ip']}:{pkt.get('dst_port')} ({pkt['proto']})")
+        if not alerts:
+            print("no alerts")
         else:
-            print(f"  [sid:{rule.sid}] {rule.msg} - {a['src_ip']} made {a['count']} matches "
-                  f"within {a['window_seconds']}s")
+            print(f"\n{len(alerts)} alerts:")
+            for a in alerts:
+                rule = a["rule"]
+                if "packet" in a:
+                    pkt = a["packet"]
+                    print(f"  [sid:{rule.sid}] {rule.msg} - {pkt['src_ip']}:{pkt.get('src_port')} "
+                          f"-> {pkt['dst_ip']}:{pkt.get('dst_port')} ({pkt['proto']})")
+                else:
+                    print(f"  [sid:{rule.sid}] {rule.msg} - {a['src_ip']} made {a['count']} matches "
+                          f"within {a['window_seconds']}s")
 
     if args.log:
         alertlog.write_alerts(alerts, args.log, append=True)
-        print(f"\nappended {len(alerts)} alerts to {args.log}")
+        if args.format != "json":
+            print(f"\nappended {len(alerts)} alerts to {args.log}")
 
 
 def cmd_check_rules(args):
@@ -49,6 +53,8 @@ def build_parser():
     run_parser.add_argument("rules")
     run_parser.add_argument("pcap")
     run_parser.add_argument("--log", help="append alerts to this log file")
+    run_parser.add_argument("--format", choices=["text", "json"], default="text",
+                             help="output format for alerts printed to stdout")
     run_parser.set_defaults(func=cmd_run)
 
     check_parser = sub.add_parser("check-rules", help="parse and list a ruleset without running it")
