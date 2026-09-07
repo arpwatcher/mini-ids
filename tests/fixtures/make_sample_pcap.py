@@ -32,6 +32,10 @@ for i in range(6):
 add(IP(src="10.0.0.5", dst="10.0.0.20") / TCP(sport=54000, dport=21, flags="PA") / b"USER admin\r\n")
 add(IP(src="10.0.0.5", dst="10.0.0.20") / TCP(sport=54000, dport=21, flags="PA") / b"PASS hunter2\r\n")
 
+# smb traffic, client request then server response - bidirectional rule scenario
+add(IP(src="10.0.0.5", dst="10.0.0.40") / TCP(sport=55000, dport=445, flags="S"))
+add(IP(src="10.0.0.40", dst="10.0.0.5") / TCP(sport=445, dport=55000, flags="SA"))
+
 out_path = Path(__file__).parent / "sample.pcap"
 wrpcap(str(out_path), packets)
 print(f"wrote {len(packets)} packets to {out_path}")

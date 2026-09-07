@@ -7,7 +7,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "sample.pcap"
 
 def test_read_packets_count():
     result = packets.read_packets(FIXTURE)
-    assert len(result) == 13
+    assert len(result) == 15
 
 
 def test_tcp_packet_fields():

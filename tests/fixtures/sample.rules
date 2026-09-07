@@ -10,3 +10,6 @@ alert tcp any any -> any 22 (msg:"ssh brute force"; sid:1000004; count:5; second
 
 # content matching: catches cleartext ftp passwords going over the wire
 alert tcp any any -> any 21 (msg:"ftp cleartext password"; sid:1000005; content:"PASS ";)
+
+# bidirectional: catches smb traffic no matter which side initiated
+alert tcp any any <> any 445 (msg:"smb traffic"; sid:1000006;)
