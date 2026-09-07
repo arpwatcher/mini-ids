@@ -26,3 +26,31 @@ def write_alerts(alerts, path, append=True):
     with open(path, mode) as f:
         for alert in alerts:
             f.write(format_alert(alert) + "\n")
+
+
+def alert_to_dict(alert):
+    """Plain-data version of an alert, safe to json.dumps - the raw alert
+    dicts carry a Rule object, which isn't serializable on its own."""
+    rule = alert["rule"]
+    base = {"sid": rule.sid, "msg": rule.msg, "proto": rule.proto}
+
+    if "packet" in alert:
+        pkt = alert["packet"]
+        base.update({
+            "kind": "packet",
+            "time": pkt["time"],
+            "src_ip": pkt["src_ip"],
+            "src_port": pkt.get("src_port"),
+            "dst_ip": pkt["dst_ip"],
+            "dst_port": pkt.get("dst_port"),
+        })
+    else:
+        base.update({
+            "kind": "threshold",
+            "time": alert["last_packet"]["time"],
+            "src_ip": alert["src_ip"],
+            "count": alert["count"],
+            "window_seconds": alert["window_seconds"],
+        })
+
+    return base
