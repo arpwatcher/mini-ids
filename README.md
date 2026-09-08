@@ -14,8 +14,8 @@ matching engine).
 - `match.py` - single-packet matching: protocol, ip (exact or CIDR), port (exact or
   range, e.g. `8000:9000`), payload content (a `content:"..."` option, plain
   case-sensitive substring search over the raw tcp/udp payload - catches things like
-  cleartext ftp passwords going over the wire), and direction (checks both ways for a
-  bidirectional rule).
+  cleartext ftp passwords going over the wire, optionally case-insensitive with
+  `nocase;`), and direction (checks both ways for a bidirectional rule).
 - `engine.py` - ties matching together with time-windowed state. A rule with `count` and
   `seconds` options becomes stateful - instead of alerting on every match, it tracks
   matches per source ip and fires one alert per burst once a source crosses the threshold
@@ -48,7 +48,7 @@ Write your own rules in a `.rules` file, one per line, `#` for comments.
 pytest
 ```
 
-63 tests. `tests/fixtures/sample.pcap` is a small synthetic capture built with
+68 tests. `tests/fixtures/sample.pcap` is a small synthetic capture built with
 `tests/fixtures/make_sample_pcap.py`, `tests/fixtures/sample.rules` is a matching ruleset
 covering every feature (protocol/ip/port matching, a stateful brute-force rule, a content
 match on a cleartext ftp password, a bidirectional smb rule), so the whole pipeline gets
