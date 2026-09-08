@@ -40,12 +40,15 @@ def proto_matches(value, pattern):
     return pattern == "any" or value == pattern
 
 
-def content_matches(payload, pattern):
+def content_matches(payload, pattern, nocase=False):
     """pattern is None when the rule doesn't care about payload content -
     that always matches. Otherwise it's a plain substring search, case
-    sensitive, same as snort's basic content matching."""
+    sensitive by default (same as snort's basic content matching), or case
+    insensitive if nocase is set."""
     if pattern is None:
         return True
+    if nocase:
+        return pattern.encode().lower() in payload.lower()
     return pattern.encode() in payload
 
 
@@ -68,7 +71,7 @@ def _endpoints_match(rule, packet, reverse=False):
 def rule_matches(rule, packet):
     if not proto_matches(packet["proto"], rule.proto):
         return False
-    if not content_matches(packet.get("payload", b""), rule.content):
+    if not content_matches(packet.get("payload", b""), rule.content, rule.nocase):
         return False
 
     if _endpoints_match(rule, packet):

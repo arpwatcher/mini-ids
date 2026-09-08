@@ -24,6 +24,23 @@ def test_content_matches_case_sensitive():
     assert not match.content_matches(b"pass hunter2", "PASS ")
 
 
+def test_content_matches_nocase():
+    assert match.content_matches(b"pass hunter2", "PASS ", nocase=True)
+    assert match.content_matches(b"PaSs hunter2", "pass ", nocase=True)
+
+
+def test_content_matches_nocase_still_requires_substring():
+    assert not match.content_matches(b"USER admin\r\n", "PASS ", nocase=True)
+
+
+def test_rule_matches_with_nocase_option():
+    rule = rules.parse_rule(
+        'alert tcp any any -> any 21 (msg:"x"; sid:1; content:"pass "; nocase;)'
+    )
+    assert match.rule_matches(rule, make_packet(payload=b"PASS hunter2\r\n"))
+    assert match.rule_matches(rule, make_packet(payload=b"pass hunter2\r\n"))
+
+
 def test_rule_matches_with_content_option():
     rule = rules.parse_rule('alert tcp any any -> any 21 (msg:"x"; sid:1; content:"PASS ";)')
     matching_pkt = make_packet(payload=b"PASS hunter2\r\n")

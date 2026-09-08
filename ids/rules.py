@@ -14,6 +14,10 @@ a plain substring search (case sensitive) over the raw bytes:
 
     alert tcp any any -> any 21 (msg:"ftp cleartext password"; sid:1000005; content:"PASS ";)
 
+Adding nocase makes the content match case insensitive, same as snort:
+
+    alert tcp any any -> any 21 (msg:"ftp password, any case"; sid:1000007; content:"pass "; nocase;)
+
 The direction operator can be "->" (one way, src to dst) or "<>" (either
 direction - matches traffic from src to dst or from dst to src):
 
@@ -47,6 +51,7 @@ class Rule:
     count: int = None
     seconds: int = None
     content: str = None
+    nocase: bool = False
     bidirectional: bool = False
 
     @property
@@ -87,6 +92,9 @@ def parse_rule(line):
     if has_count != has_seconds:
         raise RuleParseError(f"count and seconds must be used together: {line}")
 
+    if "nocase" in options and "content" not in options:
+        raise RuleParseError(f"nocase requires a content option: {line}")
+
     return Rule(
         action=fields["action"],
         proto=fields["proto"].lower(),
@@ -100,6 +108,7 @@ def parse_rule(line):
         count=int(options["count"]) if has_count else None,
         seconds=int(options["seconds"]) if has_seconds else None,
         content=options.get("content"),
+        nocase="nocase" in options,
         bidirectional=fields["direction"] == "<>",
     )
 
