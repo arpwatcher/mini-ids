@@ -11,11 +11,13 @@ matching engine).
   msg and sid are required options. Direction can be `->` (one way) or `<>`
   (bidirectional - matches traffic from src to dst or dst to src, useful when you
   don't care which side initiated).
-- `match.py` - single-packet matching: protocol, ip (exact or CIDR), port (exact or
-  range, e.g. `8000:9000`), payload content (a `content:"..."` option, plain
-  case-sensitive substring search over the raw tcp/udp payload - catches things like
-  cleartext ftp passwords going over the wire, optionally case-insensitive with
-  `nocase;`), and direction (checks both ways for a bidirectional rule).
+- `match.py` - single-packet matching: protocol, ip (exact or CIDR, either of which can
+  be negated with a leading `!` - `!10.0.0.5` or `!192.168.1.0/24` - to mean "anything
+  except this"), port (exact or range, e.g. `8000:9000`), payload content (a
+  `content:"..."` option, plain case-sensitive substring search over the raw tcp/udp
+  payload - catches things like cleartext ftp passwords going over the wire, optionally
+  case-insensitive with `nocase;`), and direction (checks both ways for a bidirectional
+  rule).
 - `engine.py` - ties matching together with time-windowed state. A rule with `count` and
   `seconds` options becomes stateful - instead of alerting on every match, it tracks
   matches per source ip and fires one alert per burst once a source crosses the threshold
@@ -48,7 +50,7 @@ Write your own rules in a `.rules` file, one per line, `#` for comments.
 pytest
 ```
 
-68 tests. `tests/fixtures/sample.pcap` is a small synthetic capture built with
+71 tests. `tests/fixtures/sample.pcap` is a small synthetic capture built with
 `tests/fixtures/make_sample_pcap.py`, `tests/fixtures/sample.rules` is a matching ruleset
 covering every feature (protocol/ip/port matching, a stateful brute-force rule, a content
 match on a cleartext ftp password, a bidirectional smb rule), so the whole pipeline gets
