@@ -11,16 +11,24 @@ def _ip_to_int(ip_str):
 
 
 def ip_matches(value, pattern):
-    if pattern == "any":
-        return True
+    """A leading "!" negates the match, same as snort - "!10.0.0.5" means
+    "anything except this host", "!10.0.0.0/24" means "outside this
+    network". Works with both the exact and CIDR forms."""
+    negate = pattern.startswith("!")
+    if negate:
+        pattern = pattern[1:]
 
-    if "/" in pattern:
+    if pattern == "any":
+        matched = True
+    elif "/" in pattern:
         network, prefix_len = pattern.split("/")
         prefix_len = int(prefix_len)
         mask = (0xFFFFFFFF << (32 - prefix_len)) & 0xFFFFFFFF if prefix_len else 0
-        return (_ip_to_int(value) & mask) == (_ip_to_int(network) & mask)
+        matched = (_ip_to_int(value) & mask) == (_ip_to_int(network) & mask)
+    else:
+        matched = value == pattern
 
-    return value == pattern
+    return not matched if negate else matched
 
 
 def port_matches(value, pattern):

@@ -24,6 +24,22 @@ def test_ip_matches_cidr_boundary():
     assert match.ip_matches("192.168.1.255", "192.168.1.0/24")
 
 
+def test_ip_matches_negated_exact():
+    assert match.ip_matches("10.0.0.6", "!10.0.0.5")
+    assert not match.ip_matches("10.0.0.5", "!10.0.0.5")
+
+
+def test_ip_matches_negated_cidr():
+    assert match.ip_matches("8.8.8.8", "!192.168.1.0/24")
+    assert not match.ip_matches("192.168.1.50", "!192.168.1.0/24")
+
+
+def test_rule_with_negated_source_excludes_that_host():
+    rule = rules.parse_rule('alert tcp !10.0.0.5 any -> any 22 (msg:"ssh from elsewhere"; sid:1;)')
+    assert not match.rule_matches(rule, make_packet(src_ip="10.0.0.5"))
+    assert match.rule_matches(rule, make_packet(src_ip="10.0.0.9"))
+
+
 def test_port_matches_any():
     assert match.port_matches(443, "any")
 
